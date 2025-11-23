@@ -19,6 +19,9 @@
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google reCAPTCHA v2 -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -56,6 +59,12 @@
                             <button type="button" class="toggle-password" onclick="togglePassword()">
                                 <i class="fas fa-eye"></i>
                             </button>
+                    
+                    <!-- Google reCAPTCHA -->
+                    <div class="form-group recaptcha-container">
+                        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+                        <small class="recaptcha-note">Verifikasi keamanan diperlukan</small>
+                    </div>
                         </div>
                     </div>
 

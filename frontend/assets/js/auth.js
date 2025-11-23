@@ -35,7 +35,19 @@ async function checkSession() {
 // Login
 async function login(nip, password) {
     try {
-        const result = await apiRequest(CONFIG.API.LOGIN, 'POST', { nip, password });
+        // Get reCAPTCHA token
+        const recaptchaToken = typeof grecaptcha !== 'undefined' && grecaptcha.getResponse ? grecaptcha.getResponse() : null;
+        
+        // Check if reCAPTCHA is filled
+        if (!recaptchaToken || recaptchaToken.length === 0) {
+            throw new Error('Silakan centang verifikasi "Saya bukan robot"');
+        }
+        
+        const result = await apiRequest(CONFIG.API.LOGIN, 'POST', { 
+            nip, 
+            password,
+            recaptchaToken 
+        });
         
         if (result.success) {
             currentUser = result.data;
@@ -52,9 +64,18 @@ async function login(nip, password) {
                 storage.set('api_source', result.source);
             }
             
+            // Reset reCAPTCHA for next login
+            if (typeof grecaptcha !== 'undefined') {
+                grecaptcha.reset();
+            }
+            
             return true;
         }
     } catch (error) {
+        // Reset reCAPTCHA on error
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.reset();
+        }
         throw error;
     }
     

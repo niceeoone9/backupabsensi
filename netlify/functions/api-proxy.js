@@ -5,8 +5,9 @@
 
 const fetch = require('node-fetch');
 
-// Mobile API Configuration
-const MOBILE_API_BASE = 'https://bisma.bekasikab.go.id/api';
+// BISMA API Configuration
+const BISMA_BASE = 'https://bisma.bekasikab.go.id';
+const LOGIN_ENDPOINT = `${BISMA_BASE}/access/validate`;
 
 exports.handler = async (event, context) => {
   // CORS Headers
@@ -70,83 +71,127 @@ exports.handler = async (event, context) => {
  * Handle Login - Connect to mobile API
  */
 async function handleLogin(body, headers) {
-  const { nip, password } = body;
+  const { nip, password, recaptchaToken } = body;
 
-  console.log('Login attempt:', { nip, hasPassword: !!password });
+  console.log('Login attempt:', { nip, hasPassword: !!password, hasRecaptcha: !!recaptchaToken });
 
-  // Try different field name variations that mobile app might use
-  const loginAttempts = [
-    // Attempt 1: username field (common)
-    { username: nip, password: password },
-    // Attempt 2: NIP field (specific to app)
-    { NIP: nip, password: password },
-    // Attempt 3: userNIP field (from strings analysis)
-    { userNIP: nip, password: password },
-    // Attempt 4: NIPUser field (from strings analysis)
-    { NIPUser: nip, password: password },
-    // Attempt 5: email format if NIP is email
-    { email: nip, password: password },
-  ];
-
-  // Try mobile API with different field variations
-  for (let i = 0; i < loginAttempts.length; i++) {
-    try {
-      console.log(`Login attempt ${i + 1}:`, Object.keys(loginAttempts[i]));
-      
-      const response = await fetch(`${MOBILE_API_BASE}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginAttempts[i]),
-      });
-
-      const data = await response.json();
-      console.log(`Attempt ${i + 1} response:`, { 
-        status: response.status, 
-        success: data.success,
-        message: data.message 
-      });
-
-      if (response.ok && data.success) {
-        console.log('✓ Login successful with field variation:', Object.keys(loginAttempts[i]));
-        
-        // Success from mobile API
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            success: true,
-            message: 'Login berhasil',
-            data: {
-              nip: nip,
-              nama: data.data?.nama || data.nama || 'User',
-              jabatan: data.data?.jabatan || data.jabatan || '',
-              unit_kerja: data.data?.unit_kerja || data.unitKerja || '',
-              email: data.data?.email || '',
-              phone: data.data?.phone || data.data?.noHp || '',
-            },
-            token: data.token || data.data?.token || '',
-            source: 'mobile_api',
-            fieldUsed: Object.keys(loginAttempts[i])[0],
-          }),
-        };
-      }
-      
-      // If 401, try next variation
-      if (response.status === 401 && i < loginAttempts.length - 1) {
-        continue;
-      }
-      
-    } catch (error) {
-      console.error(`Mobile API Login Attempt ${i + 1} Error:`, error.message);
-      if (i < loginAttempts.length - 1) {
-        continue;
-      }
+  // Try BISMA website login endpoint
+  try {
+    // Prepare form data (application/x-www-form-urlencoded)
+    const formData = new URLSearchParams();
+    formData.append('NamaUser', nip);
+    formData.append('PassUser', password);
+    if (recaptchaToken) {
+      formData.append('g-recaptcha-response', recaptchaToken);
     }
+
+    console.log('Calling BISMA login endpoint:', LOGIN_ENDPOINT);
+    
+    const response = await fetch(LOGIN_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+      body: formData.toString(),
+      redirect: 'manual', // Don't follow redirects
+    });
+
+    console.log('BISMA response status:', response.status);
+    
+    // Check for redirect (302/301) - indicates successful login
+    if (response.status === 302 || response.status === 301) {
+      const location = response.headers.get('location');
+      console.log('✓ Login successful - redirect to:', location);
+      
+      // Extract cookies for session
+      const cookies = response.headers.get('set-cookie') || '';
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          message: 'Login berhasil',
+          data: {
+            nip: nip,
+            nama: 'User ' + nip.substring(0, 10),
+            jabatan: 'Pegawai BKPSDM',
+            unit_kerja: 'BKPSDM Kab. Bekasi',
+            email: nip + '@bekasikab.go.id',
+            phone: '',
+          },
+          token: cookies.split(';')[0] || 'session_' + Date.now(),
+          source: 'bisma_web',
+          redirectTo: location,
+        }),
+      };
+    }
+
+    // Check response body for errors
+    const responseText = await response.text();
+    console.log('Response preview:', responseText.substring(0, 200));
+
+    // Check if login page returned (means login failed)
+    if (responseText.includes('login-page') || responseText.includes('Password')) {
+      console.log('Login failed - returned to login page');
+      
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: 'NIP atau password salah',
+        }),
+      };
+    }
+
+    // If reCAPTCHA error
+    if (responseText.includes('recaptcha') || responseText.includes('captcha')) {
+      console.log('reCAPTCHA validation required or failed');
+      
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: 'Verifikasi reCAPTCHA diperlukan',
+          requireRecaptcha: true,
+        }),
+      };
+    }
+
+    // Success if we got here and response is 200
+    if (response.status === 200 && !responseText.includes('login-page')) {
+      console.log('✓ Login successful - status 200');
+      
+      const cookies = response.headers.get('set-cookie') || '';
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          message: 'Login berhasil',
+          data: {
+            nip: nip,
+            nama: 'User ' + nip.substring(0, 10),
+            jabatan: 'Pegawai BKPSDM',
+            unit_kerja: 'BKPSDM Kab. Bekasi',
+            email: nip + '@bekasikab.go.id',
+            phone: '',
+          },
+          token: cookies.split(';')[0] || 'session_' + Date.now(),
+          source: 'bisma_web',
+        }),
+      };
+    }
+
+  } catch (error) {
+    console.error('BISMA Login Error:', error.message);
   }
 
-  console.log('All login attempts failed, checking demo mode...');
+  console.log('Login failed, checking demo mode...');
 
   // Fallback to demo mode
   if (password === 'demo123' || nip === 'demo') {

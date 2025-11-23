@@ -741,3 +741,27 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--gray-500);
 }
+
+/* reCAPTCHA Styles */
+.recaptcha-container {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.recaptcha-note {
+    margin-top: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+/* Responsive reCAPTCHA */
+@media (max-width: 380px) {
+    .g-recaptcha {
+        transform: scale(0.85);
+        transform-origin: 0 0;
+    }
+}
