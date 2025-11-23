@@ -103,11 +103,15 @@ function showDashboard() {
 }
 
 // Log for debugging
-console.log('BKPSDMApp Backup System v1.0.0');
+console.log('%cBKPSDMApp Backup System v1.0.0', 'color: blue; font-weight: bold;');
 console.log('Demo Mode:', CONFIG.DEMO_MODE);
+console.log('Use Netlify Functions:', CONFIG.USE_NETLIFY_FUNCTIONS);
 console.log('API Base:', CONFIG.API_BASE_URL);
 
 if (CONFIG.DEMO_MODE) {
     console.log('%cDEMO MODE ACTIVE', 'color: orange; font-size: 16px; font-weight: bold;');
     console.log('%cLogin with: NIP=demo, Password=demo123', 'color: green; font-size: 14px;');
+} else if (CONFIG.USE_NETLIFY_FUNCTIONS) {
+    console.log('%cPRODUCTION MODE - Using Netlify Functions', 'color: green; font-size: 14px; font-weight: bold;');
+    console.log('Will connect to mobile backend API');
 }
