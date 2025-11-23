@@ -6,19 +6,19 @@ const CONFIG = {
     // API Base URL - will be set dynamically
     API_BASE_URL: window.location.origin,
     
-    // Use API Bridge to connect with mobile backend
-    USE_API_BRIDGE: true,  // Set to true to connect with mobile API
+    // Use Netlify Functions for API proxy (connects to mobile backend)
+    USE_NETLIFY_FUNCTIONS: true,
     
     // API Endpoints
     API: {
-        // API Bridge endpoints (connects to mobile backend)
-        LOGIN: '/api_bridge.php/api/auth/login',
+        // Netlify Functions endpoints (connects to mobile backend API)
+        LOGIN: '/.netlify/functions/api-proxy/login',
         LOGOUT: '/demo.php/api/auth/logout',
         SESSION: '/demo.php/api/auth/session',
-        CHECKIN: '/api_bridge.php/api/attendance/checkin',
-        CHECKOUT: '/api_bridge.php/api/attendance/checkout',
-        TODAY: '/demo.php/api/attendance/today',
-        HISTORY: '/demo.php/api/attendance/history'
+        CHECKIN: '/.netlify/functions/api-proxy/checkin',
+        CHECKOUT: '/.netlify/functions/api-proxy/checkout',
+        TODAY: '/.netlify/functions/api-proxy/today',
+        HISTORY: '/.netlify/functions/api-proxy/history'
     },
     
     // Security Settings (Demo Mode)

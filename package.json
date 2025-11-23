@@ -1,0 +1,19 @@
+{
+  "name": "bkpsdm-backup-attendance",
+  "version": "1.0.0",
+  "description": "BKPSDM Backup Attendance System",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [
+    "attendance",
+    "bkpsdm",
+    "backup"
+  ],
+  "author": "BKPSDM Kabupaten Bekasi",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}

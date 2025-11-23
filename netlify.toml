@@ -4,8 +4,11 @@
   # Publish directory (frontend files)
   publish = "frontend"
   
-  # No build command needed (static + PHP)
-  command = "echo 'No build required'"
+  # Build command - install dependencies for functions
+  command = "npm install"
+  
+  # Functions directory
+  functions = "netlify/functions"
 
 # Redirect rules for API
 [[redirects]]
