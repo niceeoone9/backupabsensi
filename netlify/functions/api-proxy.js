@@ -6,7 +6,8 @@
 const fetch = require('node-fetch');
 
 // Mobile API Configuration
-const MOBILE_API_BASE = 'https://bisma.bekasikab.go.id/api';
+// Use environment variable for production, fallback to default for demo
+const MOBILE_API_BASE = process.env.MOBILE_API_BASE || 'https://bisma.bekasikab.go.id/api';
 
 exports.handler = async (event, context) => {
   // CORS Headers
