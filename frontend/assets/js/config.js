@@ -39,7 +39,7 @@ const CONFIG = {
     ],
     
     // Demo Mode
-    DEMO_MODE: true,
+    DEMO_MODE: false,  // Set to false to use real API via Netlify Functions
     DEMO_CREDENTIALS: {
         nip: 'demo',
         password: 'demo123'
