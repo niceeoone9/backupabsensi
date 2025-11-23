@@ -72,46 +72,81 @@ exports.handler = async (event, context) => {
 async function handleLogin(body, headers) {
   const { nip, password } = body;
 
-  // Try mobile API first
-  try {
-    const response = await fetch(`${MOBILE_API_BASE}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: nip,
-        password: password,
-      }),
-      timeout: 10000,
-    });
+  console.log('Login attempt:', { nip, hasPassword: !!password });
 
-    const data = await response.json();
+  // Try different field name variations that mobile app might use
+  const loginAttempts = [
+    // Attempt 1: username field (common)
+    { username: nip, password: password },
+    // Attempt 2: NIP field (specific to app)
+    { NIP: nip, password: password },
+    // Attempt 3: userNIP field (from strings analysis)
+    { userNIP: nip, password: password },
+    // Attempt 4: NIPUser field (from strings analysis)
+    { NIPUser: nip, password: password },
+    // Attempt 5: email format if NIP is email
+    { email: nip, password: password },
+  ];
 
-    if (response.ok && data.success) {
-      // Success from mobile API
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          message: 'Login berhasil',
-          data: {
-            nip: nip,
-            nama: data.data?.nama || data.nama || 'User',
-            jabatan: data.data?.jabatan || data.jabatan || '',
-            unit_kerja: data.data?.unit_kerja || data.unitKerja || '',
-            email: data.data?.email || '',
-            phone: data.data?.phone || data.data?.noHp || '',
-          },
-          token: data.token || data.data?.token || '',
-          source: 'mobile_api',
-        }),
-      };
+  // Try mobile API with different field variations
+  for (let i = 0; i < loginAttempts.length; i++) {
+    try {
+      console.log(`Login attempt ${i + 1}:`, Object.keys(loginAttempts[i]));
+      
+      const response = await fetch(`${MOBILE_API_BASE}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginAttempts[i]),
+      });
+
+      const data = await response.json();
+      console.log(`Attempt ${i + 1} response:`, { 
+        status: response.status, 
+        success: data.success,
+        message: data.message 
+      });
+
+      if (response.ok && data.success) {
+        console.log('✓ Login successful with field variation:', Object.keys(loginAttempts[i]));
+        
+        // Success from mobile API
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            message: 'Login berhasil',
+            data: {
+              nip: nip,
+              nama: data.data?.nama || data.nama || 'User',
+              jabatan: data.data?.jabatan || data.jabatan || '',
+              unit_kerja: data.data?.unit_kerja || data.unitKerja || '',
+              email: data.data?.email || '',
+              phone: data.data?.phone || data.data?.noHp || '',
+            },
+            token: data.token || data.data?.token || '',
+            source: 'mobile_api',
+            fieldUsed: Object.keys(loginAttempts[i])[0],
+          }),
+        };
+      }
+      
+      // If 401, try next variation
+      if (response.status === 401 && i < loginAttempts.length - 1) {
+        continue;
+      }
+      
+    } catch (error) {
+      console.error(`Mobile API Login Attempt ${i + 1} Error:`, error.message);
+      if (i < loginAttempts.length - 1) {
+        continue;
+      }
     }
-  } catch (error) {
-    console.error('Mobile API Login Error:', error);
   }
+
+  console.log('All login attempts failed, checking demo mode...');
 
   // Fallback to demo mode
   if (password === 'demo123' || nip === 'demo') {
