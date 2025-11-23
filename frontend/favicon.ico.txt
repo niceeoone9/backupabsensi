@@ -1,0 +1,2 @@
+# Favicon placeholder
+# In production, add proper favicon.ico file here

@@ -1,0 +1,3 @@
+# Image placeholder
+Images would go here in production.
+For demo, we'll handle missing images gracefully in the code.

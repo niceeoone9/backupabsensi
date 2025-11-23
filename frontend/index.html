@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>BKPSDMApp - Backup Absensi</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/attendance.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="spinner"></div>
+        <p>Memuat...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div id="app-container" class="app-container" style="display: none;">
+        
+        <!-- Login Page -->
+        <div id="login-page" class="page active">
+            <div class="login-container">
+                <div class="logo-section">
+                    <div style="width: 80px; height: 80px; margin: 0 auto var(--spacing-md); background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: bold;">BK</div>
+                    <h1>BKPSDMApp</h1>
+                    <p>Sistem Absensi Backup</p>
+                </div>
+
+                <form id="login-form" class="form-container">
+                    <div class="form-group">
+                        <label for="nip">NIP</label>
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="nip" name="nip" placeholder="Masukkan NIP" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" name="password" placeholder="Masukkan Password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword()">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span class="btn-text">Masuk</span>
+                        <span class="btn-loader" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </button>
+
+                    <div class="form-footer">
+                        <a href="#" onclick="showForgotPassword()">Lupa Password?</a>
+                    </div>
+                </form>
+
+                <div class="version-info">
+                    Version 1.0.0 (Backup Mode)
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="user-info">
+                        <div class="avatar" style="background: var(--gray-300); display: flex; align-items: center; justify-content: center; color: var(--gray-600); font-size: 1.5rem; font-weight: bold;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <h3 id="user-name">Loading...</h3>
+                            <p id="user-nip">-</p>
+                        </div>
+                    </div>
+                    <button class="btn-icon" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Current Date & Time -->
+            <div class="datetime-card">
+                <div class="date" id="current-date">Loading...</div>
+                <div class="time" id="current-time">00:00:00</div>
+            </div>
+
+            <!-- Attendance Status -->
+            <div class="attendance-status-card">
+                <div class="status-header">
+                    <h3>Status Absensi Hari Ini</h3>
+                    <span id="status-date">-</span>
+                </div>
+                <div class="status-content" id="attendance-status">
+                    <div class="status-item">
+                        <div class="status-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="status-info">
+                            <p class="label">Check In</p>
+                            <p class="value" id="checkin-time">Belum Absen</p>
+                        </div>
+                    </div>
+                    <div class="status-divider"></div>
+                    <div class="status-item">
+                        <div class="status-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="status-info">
+                            <p class="label">Check Out</p>
+                            <p class="value" id="checkout-time">Belum Absen</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn btn-checkin" id="btn-checkin" onclick="showAttendancePage('checkin')">
+                    <div class="action-icon">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </div>
+                    <span>Check In</span>
+                </button>
+                
+                <button class="action-btn btn-checkout" id="btn-checkout" onclick="showAttendancePage('checkout')" disabled>
+                    <div class="action-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <span>Check Out</span>
+                </button>
+            </div>
+
+            <!-- Menu Grid -->
+            <div class="menu-grid">
+                <button class="menu-item" onclick="showHistoryPage()">
+                    <i class="fas fa-history"></i>
+                    <span>Riwayat</span>
+                </button>
+                <button class="menu-item" onclick="showProfilePage()">
+                    <i class="fas fa-user"></i>
+                    <span>Profil</span>
+                </button>
+                <button class="menu-item" onclick="showSettingsPage()">
+                    <i class="fas fa-cog"></i>
+                    <span>Pengaturan</span>
+                </button>
+                <button class="menu-item" onclick="showHelpPage()">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Bantuan</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Attendance Page (Check In/Out) -->
+        <div id="attendance-page" class="page">
+            <header class="page-header">
+                <button class="btn-back" onclick="backToDashboard()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2 id="attendance-title">Absensi</h2>
+            </header>
+
+            <div class="attendance-container">
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step-1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Lokasi</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step-2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Foto</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step-3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Konfirmasi</div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Location -->
+                <div id="step-location" class="step-content active">
+                    <div class="info-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h3>Verifikasi Lokasi</h3>
+                        <p>Pastikan Anda berada di area kantor</p>
+                    </div>
+
+                    <div id="location-status" class="location-status">
+                        <div class="spinner"></div>
+                        <p>Mengambil lokasi...</p>
+                    </div>
+
+                    <div id="location-result" style="display: none;">
+                        <div class="result-item">
+                            <span class="label">Latitude:</span>
+                            <span class="value" id="location-lat">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Longitude:</span>
+                            <span class="value" id="location-lng">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Akurasi:</span>
+                            <span class="value" id="location-accuracy">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Status:</span>
+                            <span class="value status-badge" id="location-status-badge">-</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-block" id="btn-next-photo" onclick="nextToPhoto()" disabled>
+                        Lanjut ke Foto
+                    </button>
+                </div>
+
+                <!-- Step 2: Photo -->
+                <div id="step-photo" class="step-content">
+                    <div class="info-card">
+                        <i class="fas fa-camera"></i>
+                        <h3>Ambil Foto Wajah</h3>
+                        <p>Pastikan wajah terlihat jelas</p>
+                    </div>
+
+                    <div class="camera-container">
+                        <video id="camera-stream" autoplay playsinline></video>
+                        <canvas id="photo-canvas" style="display: none;"></canvas>
+                        <img id="captured-photo" style="display: none;">
+                        
+                        <div class="camera-overlay">
+                            <div class="face-guide"></div>
+                        </div>
+                    </div>
+
+                    <div class="camera-controls">
+                        <button class="btn btn-secondary" id="btn-capture" onclick="capturePhoto()">
+                            <i class="fas fa-camera"></i> Ambil Foto
+                        </button>
+                        <button class="btn btn-secondary" id="btn-retake" onclick="retakePhoto()" style="display: none;">
+                            <i class="fas fa-redo"></i> Foto Ulang
+                        </button>
+                    </div>
+
+                    <button class="btn btn-primary btn-block" id="btn-next-confirm" onclick="nextToConfirm()" disabled>
+                        Lanjut ke Konfirmasi
+                    </button>
+                </div>
+
+                <!-- Step 3: Confirmation -->
+                <div id="step-confirm" class="step-content">
+                    <div class="info-card">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Konfirmasi Absensi</h3>
+                        <p>Periksa data sebelum submit</p>
+                    </div>
+
+                    <div class="confirm-data">
+                        <div class="confirm-section">
+                            <h4>Informasi Lokasi</h4>
+                            <div class="confirm-item">
+                                <span class="label">Koordinat:</span>
+                                <span class="value" id="confirm-location">-</span>
+                            </div>
+                            <div class="confirm-item">
+                                <span class="label">Area:</span>
+                                <span class="value" id="confirm-area">-</span>
+                            </div>
+                        </div>
+
+                        <div class="confirm-section">
+                            <h4>Foto Wajah</h4>
+                            <img id="confirm-photo" class="confirm-photo" src="" alt="Photo">
+                        </div>
+
+                        <div class="confirm-section">
+                            <h4>Waktu Absensi</h4>
+                            <div class="confirm-item">
+                                <span class="label">Tanggal:</span>
+                                <span class="value" id="confirm-date">-</span>
+                            </div>
+                            <div class="confirm-item">
+                                <span class="label">Jam:</span>
+                                <span class="value" id="confirm-time">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-block" id="btn-submit" onclick="submitAttendance()">
+                        <span class="btn-text">Submit Absensi</span>
+                        <span class="btn-loader" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Page -->
+        <div id="history-page" class="page">
+            <header class="page-header">
+                <button class="btn-back" onclick="backToDashboard()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2>Riwayat Absensi</h2>
+            </header>
+
+            <div class="filter-section">
+                <select id="filter-month" class="form-control" onchange="filterHistory()">
+                    <option value="">Semua Bulan</option>
+                    <option value="1">Januari</option>
+                    <option value="2">Februari</option>
+                    <option value="3">Maret</option>
+                    <option value="4">April</option>
+                    <option value="5">Mei</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">Agustus</option>
+                    <option value="9">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+            </div>
+
+            <div id="history-list" class="history-list">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile-page" class="page">
+            <header class="page-header">
+                <button class="btn-back" onclick="backToDashboard()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2>Profil</h2>
+            </header>
+
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-avatar" style="background: var(--gray-300); display: flex; align-items: center; justify-content: center; color: var(--gray-600); font-size: 3rem;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3 id="profile-name">-</h3>
+                    <p id="profile-nip">-</p>
+                </div>
+
+                <div class="profile-info">
+                    <div class="info-item">
+                        <span class="label">Jabatan:</span>
+                        <span class="value" id="profile-position">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Unit Kerja:</span>
+                        <span class="value" id="profile-unit">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Email:</span>
+                        <span class="value" id="profile-email">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">No. HP:</span>
+                        <span class="value" id="profile-phone">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Title</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                Content
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/geolocation.js"></script>
+    <script src="assets/js/webcam.js"></script>
+    <script src="assets/js/attendance.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
